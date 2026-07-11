@@ -5,7 +5,6 @@ import StatsCard from "../components/StatsCard";
 import RepoCard from "../components/RepoCard";
 
 function Dashboard() {
-
   const [username, setUsername] = useState("");
 
   const [profile, setProfile] = useState(null);
@@ -14,50 +13,36 @@ function Dashboard() {
 
   const [repos, setRepos] = useState([]);
 
-  const search = () => {
+  const search = async () => {
+    if (!username.trim()) {
+      alert("Enter a GitHub username");
+      return;
+    }
 
-    setProfile({
-      avatar_url:
-        "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
+    try {
+      const response = await fetch(
+        `http://localhost:5000/api/github/${username}`
+      );
 
-      name: "Octocat",
+      const data = await response.json();
 
-      bio: "GitHub Mascot",
-
-      followers: 5000,
-
-      following: 10
-    });
-
-    setStats({
-      repos: 25,
-      stars: 120,
-      forks: 35
-    });
-
-    setRepos([
-      {
-        id: 1,
-        name: "GitHub Analyzer",
-        description: "Analyze GitHub profiles",
-        stars: 50,
-        forks: 10,
-        language: "JavaScript"
-      },
-      {
-        id: 2,
-        name: "Portfolio Website",
-        description: "Personal portfolio",
-        stars: 20,
-        forks: 5,
-        language: "React"
+      if (!response.ok) {
+        throw new Error(data.message || "User not found");
       }
-    ]);
+
+      setProfile(data.profile);
+      setStats(data.stats);
+      setRepos(data.repos);
+    } catch (error) {
+      alert(error.message);
+      setProfile(null);
+      setStats(null);
+      setRepos([]);
+    }
   };
 
   return (
     <div className="container">
-
       <h1>GitHub Developer Intelligence</h1>
 
       <SearchBar
@@ -70,15 +55,12 @@ function Dashboard() {
 
       <StatsCard stats={stats} />
 
-      {
-        repos.map((repo) => (
-          <RepoCard
-            key={repo.id}
-            repo={repo}
-          />
-        ))
-      }
-
+      {repos.map((repo) => (
+        <RepoCard
+          key={repo.id}
+          repo={repo}
+        />
+      ))}
     </div>
   );
 }
